@@ -342,9 +342,6 @@ def make_search_filter_query(timefrom, timetil, project):
 def get_datetime_from_es(timestr):
     return datetime.strptime(timestr, "%Y-%m-%dT%H:%M:%S.%f").replace(tzinfo=pytz.UTC)
 
-def calculate_compute_cost(total_seconds, vm_cost_hr):
-    return Decimal(Decimal(total_seconds)/Decimal(SECONDS_IN_HR)*Decimal(vm_cost_hr)*Decimal(EXTRA_MONEY))
-
 def calculate_storage_cost(portion_month_stored, file_size_gb):
     return Decimal(portion_month_stored)*Decimal(file_size_gb)*Decimal(STORAGE_PRICE_GB_MONTH)*Decimal(EXTRA_MONEY)
 
@@ -385,7 +382,6 @@ def create_analysis_costs_json(this_month_comp_hits, bill_time_start, bill_time_
                             host_metrics = analysis.get("host_metrics")
                             if host_metrics:
                                 cost = calculta_spot_instance_cost(str(analysis_start_time),str(analysis_end_time) ,str(host_metrics.get("vm_instance_type")), str(host_metrics.get("vm_region")))
-                                #calculate_compute_cost(time, pricing.get(get_vm_string(host_metrics)))
                                 analysis_costs.append(
                                     {
                                         "donor": donor.get("submitter_donor_id"),
@@ -397,6 +393,7 @@ def create_analysis_costs_json(this_month_comp_hits, bill_time_start, bill_time_
                                     }
                                 )
                                 analysis_cost_actual += cost
+
                         #Handle cost in case compute started last month and ended in current month
                         elif analysis_end_time < bill_time_end and analysis_end_time >= bill_time_start:
                             host_metrics = analysis.get("host_metrics")
@@ -512,7 +509,6 @@ def generate_daily_reports(date):
     seconds_into_month = (timeend-monthstart).total_seconds()
     daysinmonth = calendar.monthrange(timeend.year, timeend.month)[1]
     portion_of_month = Decimal(seconds_into_month)/Decimal(daysinmonth*3600*24)
-    print("This is date: {}".format(date))
     for project in projects:
         print(project)
         file_size = get_previous_file_sizes(monthstart, project=project)
